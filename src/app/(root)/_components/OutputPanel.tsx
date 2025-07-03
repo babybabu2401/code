@@ -1,87 +1,147 @@
 "use client"
 import { useCodeEditorStore } from '@/store/useCodeEditorStore';
-import { AlertTriangle, CheckCircle, Clock, Copy, Terminal } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Copy, Terminal, Activity } from 'lucide-react';
 import React, { useState } from 'react'
 import RunningCodeSkeleton from './RunningCodeSkeleton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function OutputPanel() {
   const { output, error, isRunning } = useCodeEditorStore();
-  const [ isCopied, setIsCopied] =useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const hasContent = output || error;
+
   const handleCopy = async () => {
-    if(!hasContent) return;
+    if (!hasContent) return;
     await navigator.clipboard.writeText(output || error || '');
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
+
   return (
-    <div className="relative bg-[#181825] rounded-xl p-4 ring-1 ring-gray-800/50">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-[#1e1e2e] ring-1 ring-gray-800/50">
-            <Terminal className="w-4 h-4 text-blue-400" />
+    <motion.div 
+      className="card p-6 h-full"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.1 }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl blur-sm opacity-20" />
+            <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 p-3 rounded-xl border border-white/10">
+              <Terminal className="w-5 h-5 text-emerald-400" />
+            </div>
           </div>
-          <span className="text-sm font-medium text-gray-300">Output</span>
+          
+          <div>
+            <h3 className="text-lg font-semibold text-white">Output</h3>
+            <p className="text-sm text-gray-400">
+              {isRunning ? "Executing..." : hasContent ? "Execution complete" : "Ready to run"}
+            </p>
+          </div>
         </div>
 
         {hasContent && (
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleCopy}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-300 bg-[#1e1e2e] 
-            rounded-lg ring-1 ring-gray-800/50 hover:ring-gray-700/50 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-200"
           >
-
-{isCopied ? (
+            {isCopied ? (
               <>
-                <CheckCircle className="w-3.5 h-3.5" />
-                Copied!
+                <CheckCircle className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm text-emerald-400">Copied!</span>
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5" />
-                Copy
+                <Copy className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-gray-400">Copy</span>
               </>
             )}
-          </button>
+          </motion.button>
         )}
       </div>
-      <div className="relative">
-        <div
-          className="relative bg-[#1e1e2e]/50 backdrop-blur-sm border border-[#313244] 
-        rounded-xl p-4 h-[600px] overflow-auto font-mono text-sm"
-        >
-          {isRunning ? (
-            <RunningCodeSkeleton />
-          ) : error ? (
-            <div className="flex items-start gap-3 text-red-400">
-              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-1" />
-              <div className="space-y-1">
-                <div className="font-medium">Execution Error</div>
-                <pre className="whitespace-pre-wrap text-red-400/80">{error}</pre>
-              </div>
-            </div>
-             ) : output ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-emerald-400 mb-3">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="font-medium">Execution Successful</span>
-                </div>
-                <pre className="whitespace-pre-wrap text-gray-300">{output}</pre>
-              </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gray-800/50 ring-1 ring-gray-700/50 mb-4">
-                  <Clock className="w-6 h-6" />
-                </div>
-                <p className="text-center">Run your code to see the output here...</p>
-              </div>
-            )}
-            </div>
-            </div>
-            </div>
 
-  
+      {/* Output Container */}
+      <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gray-900/50 h-[600px]">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-blue-500/5" />
+        
+        <div className="relative h-full p-6 overflow-auto font-mono text-sm">
+          <AnimatePresence mode="wait">
+            {isRunning ? (
+              <motion.div
+                key="running"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <RunningCodeSkeleton />
+              </motion.div>
+            ) : error ? (
+              <motion.div
+                key="error"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-4"
+              >
+                <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                  <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  <div>
+                    <div className="font-semibold text-red-400 mb-1">Execution Error</div>
+                    <div className="text-red-300/80 text-sm">Something went wrong during execution</div>
+                  </div>
+                </div>
+                <div className="bg-gray-900/50 rounded-xl p-4 border border-red-500/20">
+                  <pre className="whitespace-pre-wrap text-red-300 text-sm leading-relaxed">{error}</pre>
+                </div>
+              </motion.div>
+            ) : output ? (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-4"
+              >
+                <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+                  <div>
+                    <div className="font-semibold text-emerald-400 mb-1">Execution Successful</div>
+                    <div className="text-emerald-300/80 text-sm">Your code ran without errors</div>
+                  </div>
+                </div>
+                <div className="bg-gray-900/50 rounded-xl p-4 border border-emerald-500/20">
+                  <pre className="whitespace-pre-wrap text-gray-100 text-sm leading-relaxed">{output}</pre>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="h-full flex flex-col items-center justify-center text-center"
+              >
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur-xl opacity-20" />
+                  <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl border border-white/10">
+                    <Activity className="w-8 h-8 text-gray-400" />
+                  </div>
+                </div>
+                <h4 className="text-lg font-semibold text-white mb-2">Ready to Execute</h4>
+                <p className="text-gray-400 max-w-sm">
+                  Click the "Run Code" button to execute your code and see the output here
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
-export default OutputPanel
+export default OutputPanel;

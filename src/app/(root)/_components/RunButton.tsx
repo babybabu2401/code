@@ -5,70 +5,77 @@ import { useMutation } from 'convex/react';
 import React from 'react'
 import { api } from '../../../../convex/_generated/api';
 import { motion } from "framer-motion";
-import { Loader2, Play } from "lucide-react";
- 
-
- 
+import { Play, Loader2, Zap } from "lucide-react";
 
 function RunButton() {
-
   const { user } = useUser();
-  const { runCode, language, isRunning }=useCodeEditorStore();
+  const { runCode, language, isRunning } = useCodeEditorStore();
   const saveExecution = useMutation(api.codeExecutions.saveExecution);
- 
 
-const handleRun = async () => {
-  await runCode();
-  const result = getExecutionResult();
+  const handleRun = async () => {
+    await runCode();
+    const result = getExecutionResult();
 
-  if(user && result){
-    await saveExecution({
-      language,
-      code: result.code,
-      output: result.output || undefined,
-      error: result.error || undefined,
-    })
-  }
-};
+    if (user && result) {
+      await saveExecution({
+        language,
+        code: result.code,
+        output: result.output || undefined,
+        error: result.error || undefined,
+      })
+    }
+  };
 
   return (
     <motion.button
-    onClick={handleRun}
-    disabled={isRunning}
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    className={`
-      group relative inline-flex items-center gap-2.5 px-5 py-2.5
-      disabled:cursor-not-allowed
-      focus:outline-none
-    `}
-  >
-
-<div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl opacity-100 transition-opacity group-hover:opacity-90" />
-
-<div className="relative flex items-center gap-2.5">
-  {isRunning ? (
-     <>
-     <div className="relative">
-       <Loader2 className="w-4 h-4 animate-spin text-white/70" />
-       <div className="absolute inset-0 blur animate-pulse" />
-     </div>
-     <span className="text-sm font-medium text-white/90">Executing...</span>
-   </>
- ) : (
-
-  <>
-  <div className="relative flex items-center justify-center w-4 h-4">
-    <Play className="w-4 h-4 text-white/90 transition-transform group-hover:scale-110 group-hover:text-white" />
-  </div>
-  <span className="text-sm font-medium text-white/90 group-hover:text-white">
-    Run Code
-  </span>
-</>
-)}
-</div>
-</motion.button>
+      onClick={handleRun}
+      disabled={isRunning}
+      whileHover={{ scale: isRunning ? 1 : 1.02 }}
+      whileTap={{ scale: isRunning ? 1 : 0.98 }}
+      className="group relative overflow-hidden"
+    >
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl opacity-100 transition-opacity group-hover:opacity-90" />
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-blue-500 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity" />
+      
+      <div className="relative flex items-center gap-3 px-6 py-3 text-white font-medium">
+        <AnimatePresence mode="wait">
+          {isRunning ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="flex items-center gap-3"
+            >
+              <div className="relative">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <div className="absolute inset-0 blur-sm">
+                  <Loader2 className="w-4 h-4 animate-spin opacity-50" />
+                </div>
+              </div>
+              <span className="text-sm">Executing...</span>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="ready"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="flex items-center gap-3"
+            >
+              <div className="relative">
+                <Play className="w-4 h-4 transition-transform group-hover:scale-110" />
+                <div className="absolute inset-0 blur-sm opacity-0 group-hover:opacity-50 transition-opacity">
+                  <Zap className="w-4 h-4" />
+                </div>
+              </div>
+              <span className="text-sm">Run Code</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.button>
   );
 }
 
-export default RunButton
+export default RunButton;

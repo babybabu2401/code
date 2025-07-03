@@ -5,20 +5,19 @@ import { useClerk } from '@clerk/nextjs';
 import React, { useEffect, useState } from 'react';
 import { defineMonacoThemes, LANGUAGE_CONFIG } from '../_constants';
 import Image from 'next/image';
-import { RotateCcwIcon, ShareIcon, TypeIcon } from 'lucide-react';
-import { motion } from "framer-motion";
+import { RotateCcw, Share, Type, Maximize2, Settings } from 'lucide-react';
+import { motion, AnimatePresence } from "framer-motion";
 import { Editor } from '@monaco-editor/react';
 import ShareSnippetDialog from './ShareSnippetDialog';
 import { EditorPanelSkeleton } from './EditorPanelSkeleton';
-
 
 import type { editor as MonacoEditor } from 'monaco-editor';
 
 function EditorPanel() {
   const clerk = useClerk();
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
-  // ✅ Explicitly type editor as IStandaloneCodeEditor | null
   const { language, theme, fontSize, editor, setFontSize, setEditor } = useCodeEditorStore() as {
     language: string;
     theme: string;
@@ -65,71 +64,97 @@ function EditorPanel() {
   if (!mounted) return null;
 
   return (
-    <div className="relative">
-      <div className="relative bg-[#12121a]/90 backdrop-blur rounded-xl border border-white/[0.05] p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center w-8 h-8 rounded-lg bg-[#1e1e2e] ring-1 ring-white/5">
-              <Image
-                src={`/${language}.png`}
-                alt="logo"
-                width={24}
-                height={24}
-              />
+    <motion.div 
+      className={`relative transition-all duration-300 ${isFullscreen ? 'fixed inset-4 z-50' : ''}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="card p-6 h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl blur-sm opacity-20" />
+              <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 p-3 rounded-xl border border-white/10">
+                <Image
+                  src={`/${language}.png`}
+                  alt={language}
+                  width={24}
+                  height={24}
+                  className="object-contain"
+                />
+              </div>
             </div>
+            
             <div>
-              <h2 className="text-sm font-medium text-white">Code-Editor</h2>
-              <p className="text-xs text-gray-500">
-                Write and execute code in your favorite language.
+              <h2 className="text-lg font-semibold text-white">Code Editor</h2>
+              <p className="text-sm text-gray-400">
+                Write and execute {LANGUAGE_CONFIG[language].label} code
               </p>
             </div>
           </div>
 
+          {/* Controls */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-3 px-3 py-2 bg-[#1e1e2e] rounded-lg ring-1 ring-white/5">
-              <TypeIcon className="size-4 text-gray-400" />
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="12"
-                  max="24"
-                  value={fontSize}
-                  onChange={(e) => handleFontSizeChange(parseInt(e.target.value))}
-                  className="w-20 h-1 bg-gray-600 rounded-lg cursor-pointer"
-                />
-                <span className="text-sm font-medium text-gray-400 min-w-[2rem] text-center">
-                  {fontSize}
-                </span>
-              </div>
+            {/* Font Size Control */}
+            <div className="flex items-center gap-3 px-4 py-2 bg-gray-800/50 rounded-xl border border-white/10">
+              <Type className="w-4 h-4 text-gray-400" />
+              <input
+                type="range"
+                min="12"
+                max="24"
+                value={fontSize}
+                onChange={(e) => handleFontSizeChange(parseInt(e.target.value))}
+                className="w-20 h-1 bg-gray-600 rounded-lg cursor-pointer accent-indigo-500"
+              />
+              <span className="text-sm font-medium text-gray-300 min-w-[2rem] text-center">
+                {fontSize}
+              </span>
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleRefresh}
-              className="p-2 bg-[#1e1e2e] hover:bg-[#2a2a3a] rounded-lg ring-1 ring-white/5 transition-colors"
-              aria-label="Reset to default code"
-            >
-              <RotateCcwIcon className="size-4 text-gray-400" />
-            </motion.button>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleRefresh}
+                className="p-2.5 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-200"
+                title="Reset to default"
+              >
+                <RotateCcw className="w-4 h-4 text-gray-400" />
+              </motion.button>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setIsShareDialogOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg overflow-hidden bg-gradient-to-r
-               from-blue-500 to-blue-600 opacity-90 hover:opacity-100 transition-opacity"
-            >
-              <ShareIcon className="size-4 text-white" />
-              <span className="text-sm font-medium text-white">Share</span>
-            </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="p-2.5 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-200"
+                title="Toggle fullscreen"
+              >
+                <Maximize2 className="w-4 h-4 text-gray-400" />
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setIsShareDialogOpen(true)}
+                className="btn-primary flex items-center gap-2"
+              >
+                <Share className="w-4 h-4" />
+                <span className="text-sm font-medium">Share</span>
+              </motion.button>
+            </div>
           </div>
         </div>
 
-        <div className="relative group rounded-xl overflow-hidden ring-1 ring-white/[0.05]">
-          {clerk.loaded && (
+        {/* Editor Container */}
+        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gray-900/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5" />
+          
+          {clerk.loaded ? (
             <Editor
-              height="600px"
+              height={isFullscreen ? "calc(100vh - 200px)" : "600px"}
               language={LANGUAGE_CONFIG[language].monacoLanguage}
               onChange={handleEditorChange}
               theme={theme}
@@ -142,10 +167,9 @@ function EditorPanel() {
                 fontSize,
                 automaticLayout: true,
                 scrollBeyondLastLine: false,
-                padding: { top: 16, bottom: 16 },
+                padding: { top: 20, bottom: 20 },
                 renderWhitespace: "selection",
-                fontFamily:
-                  '"Fira Code", "Cascadia Code", Consolas, monospace',
+                fontFamily: '"JetBrains Mono", "Fira Code", Consolas, monospace',
                 fontLigatures: true,
                 cursorBlinking: "smooth",
                 smoothScrolling: true,
@@ -158,17 +182,27 @@ function EditorPanel() {
                   verticalScrollbarSize: 8,
                   horizontalScrollbarSize: 8,
                 },
+                bracketPairColorization: {
+                  enabled: true,
+                },
+                guides: {
+                  indentation: true,
+                  bracketPairs: true,
+                },
               }}
             />
+          ) : (
+            <EditorPanelSkeleton />
           )}
-          {!clerk.loaded && <EditorPanelSkeleton />}
         </div>
       </div>
 
-      {isShareDialogOpen && (
-        <ShareSnippetDialog onClose={() => setIsShareDialogOpen(false)} />
-      )}
-    </div>
+      <AnimatePresence>
+        {isShareDialogOpen && (
+          <ShareSnippetDialog onClose={() => setIsShareDialogOpen(false)} />
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 

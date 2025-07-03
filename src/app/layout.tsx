@@ -18,8 +18,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "SyntaxForge- CodeEditor",
-  description: "My Code Editor",
+  title: "SyntaxForge - Modern Code Editor",
+  description: "A modern, powerful code editor with real-time execution and snippet sharing",
 };
 
 export default function RootLayout({
@@ -28,18 +28,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider >
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 text-gray-100 flex flex-col`}
-      >
-        <ConvexClientProvider>
-        {children}
-        </ConvexClientProvider>
-        <Footer />
-        <Toaster />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-gray-100 flex flex-col`}
+        >
+          <ConvexClientProvider>
+            {children}
+          </ConvexClientProvider>
+          <Footer />
+          <Toaster 
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: '#1f2937',
+                color: '#f9fafb',
+                border: '1px solid #374151',
+              },
+            }}
+          />
+        </body>
+      </html>
     </ClerkProvider>
   );
 }
